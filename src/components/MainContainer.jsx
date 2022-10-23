@@ -1,11 +1,11 @@
 import React from 'react'
+import HomeContainer from './HomeContainer'
 
  const MainContainer = () => {
   return (
-    <div className='grid grid-cols-1 gap-4'>
-      <div className="p-4 bg-black flex-1"></div>
-      <div className="p-4 bg-black flex-1"></div>
-    </div>
+   <div className='w-full h-auto felx flex-col items-center justify-center'>
+    <HomeContainer/>
+   </div> 
   )
 }
 
