@@ -1,41 +1,143 @@
 import React, { useState } from 'react'
+import { useStateValue } from '../context/StateProvider'
 import { motion } from 'framer-motion'
-import {MdAttachMoney, MdCloudUpload, MdFastfood, MdFoodBank, MdMoney} from 'react-icons/md'
+import {MdAttachMoney, MdCloudUpload, MdFastfood,MdDelete, MdFoodBank,MdProductionQuantityLimits} from 'react-icons/md'
 import { categories } from '../utils/data'
 import Loader from './Loader'
 import { storage } from '../firebase.config'
-import {ref} from 'firebase/database'
-import {uploadBytesResumable } from'firebase/storage'
-
+import { ref as sRef } from 'firebase/storage';
+import {uploadBytesResumable,getDownloadURL,deleteObject } from'firebase/storage'
+import {getAllFoodItems, saveItem} from '../utils/firebaseFunctions'
+import { actionType } from '../context/reducer'
  const CreateContainer = () => {
+
   const [title,setTitle] =useState('')
   const [calories,setCalories] =useState('')
   const [price,setPrice] =useState('')
+  const [quantity,setQuantity] = useState(0)
   const [category,setCategory] =useState(null)
   const [imageAsset ,setImageAsset] = useState(null)
   const [fields,setFields] =useState(false)
   const [alertStatus, setAlertStatus]=useState("danger")
   const [msg,setMsg]=useState(null)
   const [isLoading,setIsLoading]=useState(false)
+  const [{foodItem},dispatch]= useStateValue()
 
-  const uploadimage = (e)=>{
-    setIsLoading(true)
-    const imageFile = e.target.files[0]
-    const storegeRef = ref(storage,`images/${Date.now()}-${imageFile.name}`)
-    const uploadTask = uploadBytesResumable(storegeRef , imageFile);
-    uploadTask.on('state_changed',(snapshot)=>{
-      const uploadProgress = (snapshot.bytesTransferred /snapshot.totalBytes) * 100
-    }, (error)=>{
-      console.log(error)
-      setFields(true)
-      setMsg("error while uploading : Try again")
-    },()=>{})
-  }
-  const deleteImage = ()=>{
+  const uploadImage = (e) => {
+    setIsLoading(true);
+    const imageFile = e.target.files[0];
+    const storageRef = sRef(storage, `Images/${Date.now()}-${imageFile.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, imageFile);
 
-  }
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const uploadProgress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error) => {
+        console.log(error);
+        setFields(true);
+        setMsg("Error while uploading : Try AGain 🙇");
+        setAlertStatus("danger");
+        setTimeout(() => {
+          setFields(false);
+          setIsLoading(false);
+        }, 4000);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setImageAsset(downloadURL);
+          setIsLoading(false);
+          setFields(true);
+          setMsg("Image uploaded successfully 😊");
+          setAlertStatus("success");
+          setTimeout(() => {
+            setFields(false);
+          }, 4000);
+        });
+      }
+    );
+  };
+
+  const deleteImage = () => {
+    setIsLoading(true);
+    const deleteRef = sRef(storage, imageAsset);
+    deleteObject(deleteRef).then(() => {
+      setImageAsset(null);
+      setIsLoading(false);
+      setFields(true);
+      setMsg("Image deleted successfully 😊");
+      setAlertStatus("success");
+      setTimeout(() => {
+        setFields(false);
+      }, 4000);
+    });
+  };
  
-  const saveDetails= ()=>{}
+  const saveDetails= ()=>{
+    setIsLoading(true)
+    try{
+      if((!title || !calories || !imageAsset || !price || !category || !quantity || quantity < 0)){
+        setFields(true);
+        setMsg("Required fields can't be empty 🙇");
+        setAlertStatus("danger");
+        setTimeout(() => {
+          setFields(false);
+          setIsLoading(false);
+        }, 4000);
+      }else{
+        const data = {
+          id:`${Date.now()}`,
+          title:title,
+          imageUrl:imageAsset,
+          category:category,
+          calories:calories,
+          qty:quantity,
+          price:price,
+        }
+        saveItem(data)
+        setIsLoading(false);
+        setFields(true);
+        setMsg("Item added successfully 😊");
+        setAlertStatus("success");
+        setTimeout(() => {
+          setFields(false);
+        }, 4000);
+      }
+      fetchData()
+     
+    }
+    catch(error){
+      console.log(error)
+      setFields(true);
+      setMsg("Error while uploading : Try AGain 🙇");
+      setAlertStatus("danger");
+      clearData()
+      setTimeout(() => {
+        setFields(false);
+        setIsLoading(false);
+        
+      }, 4000);
+
+    }
+
+  }
+  const fetchData = async () => {
+    await getAllFoodItems().then((data) => {
+      dispatch({
+        type : actionType.SET_FOOD_ITEMS,
+        foodItem : data
+      })
+    })
+  }
+  const clearData = () =>{
+    setTitle("")
+    setImageAsset(null)
+    setCalories("")
+    setPrice("")
+    setCalories("Select Category")
+  }
   return (
     <div className='w-full min-h-screen flex items-center justify-center'>
       <div 
@@ -99,7 +201,7 @@ import {uploadBytesResumable } from'firebase/storage'
               type="file"  
               name="uploadimage" 
               accept='image/*'
-              onChange={uploadimage} 
+              onChange={uploadImage} 
               className="w-0 h-0"/>
           </label>
         :
@@ -115,7 +217,7 @@ import {uploadBytesResumable } from'firebase/storage'
             rounded-full bg-red-500 text-xl cursor-pointer
             outline-none hover:shadow-md duration-500 transition-all 
             ease-in-out' 
-           onClick={deleteImage}><mdDelete className="text-white"/></button>
+           onClick={deleteImage}><MdDelete className="text-white"/></button>
         </div>
         }  
       </>}
@@ -139,6 +241,16 @@ import {uploadBytesResumable } from'firebase/storage'
             value={price}
             onChange={(e)=>{setPrice(e.target.value)}}
             placeholder='Price'
+            className='w-full h-full text-lg bg-transparent outline-none border-none placeholder:text-gray-400'/>
+        </div>
+        <div className="w-full py-2 border-b border-gray-300  flex items-center gap-2">
+          <MdProductionQuantityLimits className='text-gray-700 text-3xl'/>
+          <input 
+            type="number"
+            required
+            value={quantity}
+            onChange={(e)=>{setQuantity(e.target.value)}}
+            placeholder='Quantity'
             className='w-full h-full text-lg bg-transparent outline-none border-none placeholder:text-gray-400'/>
         </div>
        </div>

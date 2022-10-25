@@ -3,13 +3,9 @@ import delivery from '../img/delivery.png'
 import hero from '../img/heroBg.png'
 import {heroData} from '../utils/data'
 import i1 from '../img/i1.png'
-import f1 from '../img/f1.png'
-import c3 from '../img/c3.png'
-import fi1 from '../img/fi1.png'
 
 const HomeContainer = () => {
 
- const images = [i1,f1,c3,fi1]
   return (
     <section className='grid grid-cols-1 md:grid-cols-2 gap-2 w-full' id='home'>
       <div className="py-2 flex-1 flex flex-col items-start  justify-center gap-6">
@@ -29,17 +25,16 @@ const HomeContainer = () => {
       <div className="py-2 flex-1 flex items-center relative">
         <img src={hero} alt='hero-bg' className="ml-auto h-420  w-full lg:w-auto lg:h-650"/>
 
-        <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center lg:px-32 py-4 gap-4 flex-wrap">
-          {heroData && heroData.map(e =>(
+        <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center  lg:px-32  py-6 gap-3 flex-wrap ">
+          {/*heroData && heroData.map(e =>(
              
               <div key={e.id} className="lg:w-190 p-4 bg-cardOverlay backdrop:-blur-md rounded-md flex flex-col items-center justify-center ">
-              <img src={i1} alt="i1" className='w-20 lg:w-40 -mt-5 lg:-mt-[20px]  ' />
+              <img src={i1} alt="i1" className='w-10  lg:w-40 -mt-5 lg:-mt-[20px]  ' />
               <p className=' text-base lg:text-xl font-semibold text-textColor mt-2 lg:mt-4'>{e.name}</p>
               <p className='text-[12px] lg:text-sm text-lighttextGray font-semibold my-1 lg:my-3'>{e.desc}</p>
               <p className='text-sm font-semibold text-headingColor'><span className='text-xs text-red-600'>$</span>{e.price}</p>
             </div>
-            
-          ))}
+          ))*/}
           
         </div>
       </div>
